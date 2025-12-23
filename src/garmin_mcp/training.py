@@ -1,8 +1,18 @@
 """
 Training and performance functions for Garmin Connect MCP Server
 """
-import datetime
-from typing import Any, Dict, List, Optional, Union
+import logging
+
+from garmin_mcp.utils.decorators import handle_garmin_errors
+from garmin_mcp.utils.serialization import serialize_response
+from garmin_mcp.utils.validation import (
+    validate_date,
+    validate_date_range,
+    validate_id,
+    sanitize_string,
+)
+
+logger = logging.getLogger(__name__)
 
 # The garmin_client will be set by the main file
 garmin_client = None
@@ -18,6 +28,7 @@ def register_tools(app):
     """Register all training-related tools with the MCP server app"""
     
     @app.tool()
+    @handle_garmin_errors
     async def get_progress_summary_between_dates(
         start_date: str, end_date: str, metric: str
     ) -> str:
@@ -27,120 +38,143 @@ def register_tools(app):
             start_date: Start date in YYYY-MM-DD format
             end_date: End date in YYYY-MM-DD format
             metric: Metric to get progress for (e.g., "elevationGain", "duration", "distance", "movingDuration")
+            
+        Returns:
+            JSON string with progress summary or error message
         """
-        try:
-            summary = garmin_client.get_progress_summary_between_dates(
-                start_date, end_date, metric
-            )
-            if not summary:
-                return f"No progress summary found for {metric} between {start_date} and {end_date}."
-            return summary
-        except Exception as e:
-            return f"Error retrieving progress summary: {str(e)}"
+        start_date, end_date = validate_date_range(start_date, end_date)
+        metric = sanitize_string(metric, "metric")
+        
+        summary = garmin_client.get_progress_summary_between_dates(
+            start_date, end_date, metric
+        )
+        if not summary:
+            return f"No progress summary found for {metric} between {start_date} and {end_date}."
+        return serialize_response(summary)
     
     @app.tool()
+    @handle_garmin_errors
     async def get_hill_score(start_date: str, end_date: str) -> str:
         """Get hill score data between dates
 
         Args:
             start_date: Start date in YYYY-MM-DD format
             end_date: End date in YYYY-MM-DD format
+            
+        Returns:
+            JSON string with hill score data or error message
         """
-        try:
-            hill_score = garmin_client.get_hill_score(start_date, end_date)
-            if not hill_score:
-                return f"No hill score data found between {start_date} and {end_date}."
-            return hill_score
-        except Exception as e:
-            return f"Error retrieving hill score data: {str(e)}"
+        start_date, end_date = validate_date_range(start_date, end_date)
+        hill_score = garmin_client.get_hill_score(start_date, end_date)
+        
+        if not hill_score:
+            return f"No hill score data found between {start_date} and {end_date}."
+        return serialize_response(hill_score)
     
     @app.tool()
+    @handle_garmin_errors
     async def get_endurance_score(start_date: str, end_date: str) -> str:
         """Get endurance score data between dates
 
         Args:
             start_date: Start date in YYYY-MM-DD format
             end_date: End date in YYYY-MM-DD format
+            
+        Returns:
+            JSON string with endurance score data or error message
         """
-        try:
-            endurance_score = garmin_client.get_endurance_score(start_date, end_date)
-            if not endurance_score:
-                return f"No endurance score data found between {start_date} and {end_date}."
-            return endurance_score
-        except Exception as e:
-            return f"Error retrieving endurance score data: {str(e)}"
+        start_date, end_date = validate_date_range(start_date, end_date)
+        endurance_score = garmin_client.get_endurance_score(start_date, end_date)
+        
+        if not endurance_score:
+            return f"No endurance score data found between {start_date} and {end_date}."
+        return serialize_response(endurance_score)
     
     @app.tool()
+    @handle_garmin_errors
     async def get_training_effect(activity_id: int) -> str:
         """Get training effect data for a specific activity
         
         Args:
-            activity_id: ID of the activity to retrieve training effect for
+            activity_id: ID of the activity to retrieve training effect for (must be positive integer)
+            
+        Returns:
+            JSON string with training effect data or error message
         """
-        try:
-            effect = garmin_client.get_training_effect(activity_id)
-            if not effect:
-                return f"No training effect data found for activity with ID {activity_id}."
-            return effect
-        except Exception as e:
-            return f"Error retrieving training effect data: {str(e)}"
+        activity_id = validate_id(activity_id, "activity_id")
+        effect = garmin_client.get_training_effect(activity_id)
+        
+        if not effect:
+            return f"No training effect data found for activity with ID {activity_id}."
+        return serialize_response(effect)
     
     @app.tool()
+    @handle_garmin_errors
     async def get_max_metrics(date: str) -> str:
         """Get max metrics data (like VO2 Max and fitness age)
         
         Args:
             date: Date in YYYY-MM-DD format
+            
+        Returns:
+            JSON string with max metrics data or error message
         """
-        try:
-            metrics = garmin_client.get_max_metrics(date)
-            if not metrics:
-                return f"No max metrics data found for {date}."
-            return metrics
-        except Exception as e:
-            return f"Error retrieving max metrics data: {str(e)}"
+        date = validate_date(date, "date")
+        metrics = garmin_client.get_max_metrics(date)
+        
+        if not metrics:
+            return f"No max metrics data found for {date}."
+        return serialize_response(metrics)
     
     @app.tool()
+    @handle_garmin_errors
     async def get_hrv_data(date: str) -> str:
         """Get Heart Rate Variability (HRV) data
         
         Args:
             date: Date in YYYY-MM-DD format
+            
+        Returns:
+            JSON string with HRV data or error message
         """
-        try:
-            hrv_data = garmin_client.get_hrv_data(date)
-            if not hrv_data:
-                return f"No HRV data found for {date}."
-            return hrv_data
-        except Exception as e:
-            return f"Error retrieving HRV data: {str(e)}"
+        date = validate_date(date, "date")
+        hrv_data = garmin_client.get_hrv_data(date)
+        
+        if not hrv_data:
+            return f"No HRV data found for {date}."
+        return serialize_response(hrv_data)
     
     @app.tool()
+    @handle_garmin_errors
     async def get_fitnessage_data(date: str) -> str:
         """Get fitness age data
         
         Args:
             date: Date in YYYY-MM-DD format
+            
+        Returns:
+            JSON string with fitness age data or error message
         """
-        try:
-            fitness_age = garmin_client.get_fitnessage_data(date)
-            if not fitness_age:
-                return f"No fitness age data found for {date}."
-            return fitness_age
-        except Exception as e:
-            return f"Error retrieving fitness age data: {str(e)}"
+        date = validate_date(date, "date")
+        fitness_age = garmin_client.get_fitnessage_data(date)
+        
+        if not fitness_age:
+            return f"No fitness age data found for {date}."
+        return serialize_response(fitness_age)
     
     @app.tool()
+    @handle_garmin_errors
     async def request_reload(date: str) -> str:
         """Request reload of epoch data
         
         Args:
             date: Date in YYYY-MM-DD format
+            
+        Returns:
+            Reload result or error message
         """
-        try:
-            result = garmin_client.request_reload(date)
-            return result
-        except Exception as e:
-            return f"Error requesting data reload: {str(e)}"
+        date = validate_date(date, "date")
+        result = garmin_client.request_reload(date)
+        return serialize_response(result) if not isinstance(result, str) else result
 
     return app

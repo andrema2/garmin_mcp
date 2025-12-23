@@ -1,8 +1,19 @@
 """
 Weight management functions for Garmin Connect MCP Server
 """
-import datetime
-from typing import Any, Dict, List, Optional, Union
+import logging
+from datetime import datetime, timezone
+
+from garmin_mcp.utils.decorators import handle_garmin_errors
+from garmin_mcp.utils.serialization import serialize_response
+from garmin_mcp.utils.validation import (
+    validate_date,
+    validate_date_range,
+    validate_positive_number,
+    sanitize_string,
+)
+
+logger = logging.getLogger(__name__)
 
 # The garmin_client will be set by the main file
 garmin_client = None
@@ -18,65 +29,83 @@ def register_tools(app):
     """Register all weight management tools with the MCP server app"""
     
     @app.tool()
+    @handle_garmin_errors
     async def get_weigh_ins(start_date: str, end_date: str) -> str:
         """Get weight measurements between specified dates
         
         Args:
             start_date: Start date in YYYY-MM-DD format
             end_date: End date in YYYY-MM-DD format
+            
+        Returns:
+            JSON string with weight measurements or error message
         """
-        try:
-            weigh_ins = garmin_client.get_weigh_ins(start_date, end_date)
-            if not weigh_ins:
-                return f"No weight measurements found between {start_date} and {end_date}."
-            return weigh_ins
-        except Exception as e:
-            return f"Error retrieving weight measurements: {str(e)}"
+        start_date, end_date = validate_date_range(start_date, end_date)
+        weigh_ins = garmin_client.get_weigh_ins(start_date, end_date)
+        
+        if not weigh_ins:
+            return f"No weight measurements found between {start_date} and {end_date}."
+        
+        return serialize_response(weigh_ins)
 
     @app.tool()
+    @handle_garmin_errors
     async def get_daily_weigh_ins(date: str) -> str:
         """Get weight measurements for a specific date
         
         Args:
             date: Date in YYYY-MM-DD format
+            
+        Returns:
+            JSON string with weight measurements or error message
         """
-        try:
-            weigh_ins = garmin_client.get_daily_weigh_ins(date)
-            if not weigh_ins:
-                return f"No weight measurements found for {date}."
-            return weigh_ins
-        except Exception as e:
-            return f"Error retrieving daily weight measurements: {str(e)}"
+        date = validate_date(date, "date")
+        weigh_ins = garmin_client.get_daily_weigh_ins(date)
+        
+        if not weigh_ins:
+            return f"No weight measurements found for {date}."
+        
+        return serialize_response(weigh_ins)
     
     @app.tool()
+    @handle_garmin_errors
     async def delete_weigh_ins(date: str, delete_all: bool = True) -> str:
         """Delete weight measurements for a specific date
         
         Args:
             date: Date in YYYY-MM-DD format
             delete_all: Whether to delete all measurements for the day
+            
+        Returns:
+            Deletion result or error message
         """
-        try:
-            result = garmin_client.delete_weigh_ins(date, delete_all=delete_all)
-            return result
-        except Exception as e:
-            return f"Error deleting weight measurements: {str(e)}"
+        date = validate_date(date, "date")
+        result = garmin_client.delete_weigh_ins(date, delete_all=delete_all)
+        return serialize_response(result) if not isinstance(result, str) else result
     
     @app.tool()
+    @handle_garmin_errors
     async def add_weigh_in(weight: float, unit_key: str = "kg") -> str:
         """Add a new weight measurement
         
         Args:
-            weight: Weight value
+            weight: Weight value (must be positive)
             unit_key: Unit of weight ('kg' or 'lb')
+            
+        Returns:
+            Addition result or error message
         """
-        try:
-            result = garmin_client.add_weigh_in(weight=weight, unitKey=unit_key)
-            return result
-        except Exception as e:
-            return f"Error adding weight measurement: {str(e)}"
+        weight = validate_positive_number(weight, "weight", allow_zero=False)
+        unit_key = sanitize_string(unit_key, "unit_key")
+        
+        if unit_key not in ("kg", "lb"):
+            raise ValueError(f"unit_key must be 'kg' or 'lb', got '{unit_key}'")
+        
+        result = garmin_client.add_weigh_in(weight=weight, unitKey=unit_key)
+        return serialize_response(result) if not isinstance(result, str) else result
     
     @app.tool()
+    @handle_garmin_errors
     async def add_weigh_in_with_timestamps(
         weight: float, 
         unit_key: str = "kg", 
@@ -86,26 +115,32 @@ def register_tools(app):
         """Add a new weight measurement with specific timestamps
         
         Args:
-            weight: Weight value
+            weight: Weight value (must be positive)
             unit_key: Unit of weight ('kg' or 'lb')
-            date_timestamp: Local timestamp in format YYYY-MM-DDThh:mm:ss
-            gmt_timestamp: GMT timestamp in format YYYY-MM-DDThh:mm:ss
+            date_timestamp: Local timestamp in format YYYY-MM-DDThh:mm:ss (optional)
+            gmt_timestamp: GMT timestamp in format YYYY-MM-DDThh:mm:ss (optional)
+            
+        Returns:
+            Addition result or error message
         """
-        try:
-            if date_timestamp is None or gmt_timestamp is None:
-                # Generate timestamps if not provided
-                now = datetime.datetime.now()
-                date_timestamp = now.strftime('%Y-%m-%dT%H:%M:%S')
-                gmt_timestamp = now.astimezone(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%S')
-                
-            result = garmin_client.add_weigh_in_with_timestamps(
-                weight=weight,
-                unitKey=unit_key,
-                dateTimestamp=date_timestamp,
-                gmtTimestamp=gmt_timestamp
-            )
-            return result
-        except Exception as e:
-            return f"Error adding weight measurement with timestamps: {str(e)}"
+        weight = validate_positive_number(weight, "weight", allow_zero=False)
+        unit_key = sanitize_string(unit_key, "unit_key")
+        
+        if unit_key not in ("kg", "lb"):
+            raise ValueError(f"unit_key must be 'kg' or 'lb', got '{unit_key}'")
+        
+        if date_timestamp is None or gmt_timestamp is None:
+            # Generate timestamps if not provided (FIXED: use timezone-aware datetime)
+            now = datetime.now(timezone.utc)
+            date_timestamp = now.strftime('%Y-%m-%dT%H:%M:%S')
+            gmt_timestamp = now.strftime('%Y-%m-%dT%H:%M:%S')
+        
+        result = garmin_client.add_weigh_in_with_timestamps(
+            weight=weight,
+            unitKey=unit_key,
+            dateTimestamp=date_timestamp,
+            gmtTimestamp=gmt_timestamp
+        )
+        return serialize_response(result) if not isinstance(result, str) else result
 
     return app

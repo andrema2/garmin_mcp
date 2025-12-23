@@ -9,15 +9,6 @@ from garmin_mcp.utils.validation import validate_date, validate_date_range, vali
 
 logger = logging.getLogger(__name__)
 
-# The garmin_client will be set by the main file
-garmin_client = None
-
-
-def configure(client):
-    """Configure the module with the Garmin client instance"""
-    global garmin_client
-    garmin_client = client
-
 
 def register_tools(app):
     """Register all workout-related tools with the MCP server app"""
@@ -30,6 +21,10 @@ def register_tools(app):
         Returns:
             JSON string with all workouts or error message
         """
+        from garmin_mcp import get_garmin_client
+
+        garmin_client = get_garmin_client()
+
         workouts = garmin_client.get_workouts()
         if not workouts:
             return "No workouts found."
@@ -47,6 +42,10 @@ def register_tools(app):
             JSON string with workout details or error message
         """
         workout_id = validate_id(workout_id, "workout_id")
+        from garmin_mcp import get_garmin_client
+
+        garmin_client = get_garmin_client()
+
         workout = garmin_client.get_workout_by_id(workout_id)
         if not workout:
             return f"No workout found with ID {workout_id}."
@@ -64,6 +63,10 @@ def register_tools(app):
             Message about workout data availability
         """
         workout_id = validate_id(workout_id, "workout_id")
+        from garmin_mcp import get_garmin_client
+
+        garmin_client = get_garmin_client()
+
         workout_data = garmin_client.download_workout(workout_id)
         if not workout_data:
             return f"No workout data found for workout with ID {workout_id}."
@@ -85,6 +88,10 @@ def register_tools(app):
         from garmin_mcp.utils.validation import sanitize_string
         
         workout_json = sanitize_string(workout_json, "workout_json")
+        from garmin_mcp import get_garmin_client
+
+        garmin_client = get_garmin_client()
+
         result = garmin_client.upload_workout(workout_json)
         return serialize_response(result) if not isinstance(result, str) else result
             
@@ -137,6 +144,12 @@ def register_tools(app):
             }
         }
         
+        from garmin_mcp import get_garmin_client
+
+        
+        garmin_client = get_garmin_client()
+
+        
         result = garmin_client.query_garmin_graphql(query)
 
         if not result or "data" not in result:
@@ -178,6 +191,12 @@ def register_tools(app):
                 "firstDayOfWeek": "monday"
             }
         }
+        
+        from garmin_mcp import get_garmin_client
+
+        
+        garmin_client = get_garmin_client()
+
         
         result = garmin_client.query_garmin_graphql(query)
 

@@ -9,15 +9,6 @@ from garmin_mcp.utils.validation import sanitize_string
 
 logger = logging.getLogger(__name__)
 
-# The garmin_client will be set by the main file
-garmin_client = None
-
-
-def configure(client):
-    """Configure the module with the Garmin client instance"""
-    global garmin_client
-    garmin_client = client
-
 
 def register_tools(app):
     """Register all gear management tools with the MCP server app"""
@@ -33,6 +24,9 @@ def register_tools(app):
         Returns:
             JSON string with gear information or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         user_profile_id = sanitize_string(user_profile_id, "user_profile_id")
         gear = garmin_client.get_gear(user_profile_id)
         if not gear:
@@ -50,6 +44,9 @@ def register_tools(app):
         Returns:
             JSON string with gear defaults or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         user_profile_id = sanitize_string(user_profile_id, "user_profile_id")
         defaults = garmin_client.get_gear_defaults(user_profile_id)
         if not defaults:
@@ -67,6 +64,9 @@ def register_tools(app):
         Returns:
             JSON string with gear statistics or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         gear_uuid = sanitize_string(gear_uuid, "gear_uuid")
         stats = garmin_client.get_gear_stats(gear_uuid)
         if not stats:

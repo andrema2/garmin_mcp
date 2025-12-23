@@ -14,15 +14,6 @@ from garmin_mcp.utils.validation import (
 
 logger = logging.getLogger(__name__)
 
-# The garmin_client will be set by the main file
-garmin_client = None
-
-
-def configure(client):
-    """Configure the module with the Garmin client instance"""
-    global garmin_client
-    garmin_client = client
-
 
 def register_tools(app):
     """Register all training-related tools with the MCP server app"""
@@ -45,6 +36,12 @@ def register_tools(app):
         start_date, end_date = validate_date_range(start_date, end_date)
         metric = sanitize_string(metric, "metric")
         
+        from garmin_mcp import get_garmin_client
+
+        
+        garmin_client = get_garmin_client()
+
+        
         summary = garmin_client.get_progress_summary_between_dates(
             start_date, end_date, metric
         )
@@ -65,6 +62,10 @@ def register_tools(app):
             JSON string with hill score data or error message
         """
         start_date, end_date = validate_date_range(start_date, end_date)
+        from garmin_mcp import get_garmin_client
+
+        garmin_client = get_garmin_client()
+
         hill_score = garmin_client.get_hill_score(start_date, end_date)
         
         if not hill_score:
@@ -84,6 +85,10 @@ def register_tools(app):
             JSON string with endurance score data or error message
         """
         start_date, end_date = validate_date_range(start_date, end_date)
+        from garmin_mcp import get_garmin_client
+
+        garmin_client = get_garmin_client()
+
         endurance_score = garmin_client.get_endurance_score(start_date, end_date)
         
         if not endurance_score:
@@ -102,6 +107,10 @@ def register_tools(app):
             JSON string with training effect data or error message
         """
         activity_id = validate_id(activity_id, "activity_id")
+        from garmin_mcp import get_garmin_client
+
+        garmin_client = get_garmin_client()
+
         effect = garmin_client.get_training_effect(activity_id)
         
         if not effect:
@@ -120,6 +129,10 @@ def register_tools(app):
             JSON string with max metrics data or error message
         """
         date = validate_date(date, "date")
+        from garmin_mcp import get_garmin_client
+
+        garmin_client = get_garmin_client()
+
         metrics = garmin_client.get_max_metrics(date)
         
         if not metrics:
@@ -138,6 +151,10 @@ def register_tools(app):
             JSON string with HRV data or error message
         """
         date = validate_date(date, "date")
+        from garmin_mcp import get_garmin_client
+
+        garmin_client = get_garmin_client()
+
         hrv_data = garmin_client.get_hrv_data(date)
         
         if not hrv_data:
@@ -156,6 +173,10 @@ def register_tools(app):
             JSON string with fitness age data or error message
         """
         date = validate_date(date, "date")
+        from garmin_mcp import get_garmin_client
+
+        garmin_client = get_garmin_client()
+
         fitness_age = garmin_client.get_fitnessage_data(date)
         
         if not fitness_age:
@@ -174,6 +195,10 @@ def register_tools(app):
             Reload result or error message
         """
         date = validate_date(date, "date")
+        from garmin_mcp import get_garmin_client
+
+        garmin_client = get_garmin_client()
+
         result = garmin_client.request_reload(date)
         return serialize_response(result) if not isinstance(result, str) else result
 

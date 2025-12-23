@@ -14,15 +14,6 @@ from garmin_mcp.utils.validation import (
 
 logger = logging.getLogger(__name__)
 
-# The garmin_client will be set by the main file
-garmin_client = None
-
-
-def configure(client):
-    """Configure the module with the Garmin client instance"""
-    global garmin_client
-    garmin_client = client
-
 
 def register_tools(app):
     """Register all activity management tools with the MCP server app"""
@@ -44,6 +35,9 @@ def register_tools(app):
         Returns:
             JSON string with activities or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         start_date, end_date = validate_date_range(start_date, end_date)
         
         if activity_type:
@@ -72,6 +66,9 @@ def register_tools(app):
         Returns:
             JSON string with activities or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         date = validate_date(date, "date")
         activities = garmin_client.get_activities_fordate(date)
         
@@ -91,6 +88,9 @@ def register_tools(app):
         Returns:
             JSON string with activity information or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         activity_id = validate_id(activity_id, "activity_id")
         activity = garmin_client.get_activity(activity_id)
         
@@ -110,6 +110,9 @@ def register_tools(app):
         Returns:
             JSON string with splits data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         activity_id = validate_id(activity_id, "activity_id")
         splits = garmin_client.get_activity_splits(activity_id)
         
@@ -129,6 +132,9 @@ def register_tools(app):
         Returns:
             JSON string with typed splits data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         activity_id = validate_id(activity_id, "activity_id")
         typed_splits = garmin_client.get_activity_typed_splits(activity_id)
         
@@ -148,6 +154,9 @@ def register_tools(app):
         Returns:
             JSON string with split summaries or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         activity_id = validate_id(activity_id, "activity_id")
         split_summaries = garmin_client.get_activity_split_summaries(activity_id)
         
@@ -167,6 +176,9 @@ def register_tools(app):
         Returns:
             JSON string with weather data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         activity_id = validate_id(activity_id, "activity_id")
         weather = garmin_client.get_activity_weather(activity_id)
         
@@ -186,6 +198,9 @@ def register_tools(app):
         Returns:
             JSON string with heart rate time zone data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         activity_id = validate_id(activity_id, "activity_id")
         hr_zones = garmin_client.get_activity_hr_in_timezones(activity_id)
         
@@ -205,6 +220,9 @@ def register_tools(app):
         Returns:
             JSON string with gear data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         activity_id = validate_id(activity_id, "activity_id")
         gear = garmin_client.get_activity_gear(activity_id)
         
@@ -224,6 +242,9 @@ def register_tools(app):
         Returns:
             JSON string with exercise sets data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         activity_id = validate_id(activity_id, "activity_id")
         exercise_sets = garmin_client.get_activity_exercise_sets(activity_id)
         

@@ -14,15 +14,6 @@ from garmin_mcp.utils.validation import (
 
 logger = logging.getLogger(__name__)
 
-# The garmin_client will be set by the main file
-garmin_client = None
-
-
-def configure(client):
-    """Configure the module with the Garmin client instance"""
-    global garmin_client
-    garmin_client = client
-
 
 def register_tools(app):
     """Register all data management tools with the MCP server app"""
@@ -87,6 +78,12 @@ def register_tools(app):
         if bmi is not None:
             validate_positive_number(bmi, "bmi", allow_zero=True)
         
+        from garmin_mcp import get_garmin_client
+
+        
+        garmin_client = get_garmin_client()
+
+        
         result = garmin_client.add_body_composition(
             date,
             weight=weight,
@@ -130,6 +127,12 @@ def register_tools(app):
         if notes:
             notes = sanitize_string(notes, "notes")
         
+        from garmin_mcp import get_garmin_client
+
+        
+        garmin_client = get_garmin_client()
+
+        
         result = garmin_client.set_blood_pressure(
             systolic, diastolic, pulse, notes=notes
         )
@@ -155,6 +158,12 @@ def register_tools(app):
         value_in_ml = int(validate_positive_number(value_in_ml, "value_in_ml", allow_zero=True))
         cdate = validate_date(cdate, "cdate")
         timestamp = sanitize_string(timestamp, "timestamp")
+        
+        from garmin_mcp import get_garmin_client
+
+        
+        garmin_client = get_garmin_client()
+
         
         result = garmin_client.add_hydration_data(
             value_in_ml=value_in_ml,

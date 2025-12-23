@@ -13,15 +13,6 @@ from garmin_mcp.utils.validation import (
 
 logger = logging.getLogger(__name__)
 
-# The garmin_client will be set by the main file
-garmin_client = None
-
-
-def configure(client):
-    """Configure the module with the Garmin client instance"""
-    global garmin_client
-    garmin_client = client
-
 
 def register_tools(app):
     """Register all challenges-related tools with the MCP server app"""
@@ -42,6 +33,9 @@ def register_tools(app):
         if goal_type not in ("active", "future", "past"):
             raise ValueError(f"goal_type must be 'active', 'future', or 'past', got '{goal_type}'")
         
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         goals = garmin_client.get_goals(goal_type)
         if not goals:
             return f"No {goal_type} goals found."
@@ -55,6 +49,9 @@ def register_tools(app):
         Returns:
             JSON string with personal records or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         records = garmin_client.get_personal_record()
         if not records:
             return "No personal records found."
@@ -68,6 +65,9 @@ def register_tools(app):
         Returns:
             JSON string with earned badges or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         badges = garmin_client.get_earned_badges()
         if not badges:
             return "No earned badges found."
@@ -87,6 +87,9 @@ def register_tools(app):
         """
         start = int(validate_positive_number(start, "start", allow_zero=True))
         limit = int(validate_positive_number(limit, "limit", allow_zero=False))
+        
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
         
         challenges = garmin_client.get_adhoc_challenges(start, limit)
         if not challenges:
@@ -108,6 +111,9 @@ def register_tools(app):
         start = int(validate_positive_number(start, "start", allow_zero=False))
         limit = int(validate_positive_number(limit, "limit", allow_zero=False))
         
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         challenges = garmin_client.get_available_badge_challenges(start, limit)
         if not challenges:
             return "No available badge challenges found."
@@ -127,6 +133,9 @@ def register_tools(app):
         """
         start = int(validate_positive_number(start, "start", allow_zero=False))
         limit = int(validate_positive_number(limit, "limit", allow_zero=False))
+        
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
         
         challenges = garmin_client.get_badge_challenges(start, limit)
         if not challenges:
@@ -148,6 +157,9 @@ def register_tools(app):
         start = int(validate_positive_number(start, "start", allow_zero=False))
         limit = int(validate_positive_number(limit, "limit", allow_zero=False))
         
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         challenges = garmin_client.get_non_completed_badge_challenges(start, limit)
         if not challenges:
             return "No non-completed badge challenges found."
@@ -161,6 +173,9 @@ def register_tools(app):
         Returns:
             JSON string with race predictions or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         predictions = garmin_client.get_race_predictions()
         if not predictions:
             return "No race predictions found."
@@ -179,6 +194,10 @@ def register_tools(app):
             JSON string with challenges or error message
         """
         start_date, end_date = validate_date_range(start_date, end_date)
+        
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         challenges = garmin_client.get_inprogress_virtual_challenges(
             start_date, end_date
         )

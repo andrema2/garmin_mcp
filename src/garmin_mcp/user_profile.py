@@ -8,15 +8,6 @@ from garmin_mcp.utils.serialization import serialize_response
 
 logger = logging.getLogger(__name__)
 
-# The garmin_client will be set by the main file
-garmin_client = None
-
-
-def configure(client):
-    """Configure the module with the Garmin client instance"""
-    global garmin_client
-    garmin_client = client
-
 
 def register_tools(app):
     """Register all user profile tools with the MCP server app"""
@@ -29,6 +20,9 @@ def register_tools(app):
         Returns:
             User's full name or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         full_name = garmin_client.get_full_name()
         return full_name if isinstance(full_name, str) else serialize_response(full_name)
 
@@ -40,6 +34,9 @@ def register_tools(app):
         Returns:
             Unit system or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         unit_system = garmin_client.get_unit_system()
         return unit_system if isinstance(unit_system, str) else serialize_response(unit_system)
     
@@ -51,6 +48,9 @@ def register_tools(app):
         Returns:
             JSON string with user profile information or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         profile = garmin_client.get_user_profile()
         if not profile:
             return "No user profile information found."
@@ -64,6 +64,9 @@ def register_tools(app):
         Returns:
             JSON string with user profile settings or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         settings = garmin_client.get_userprofile_settings()
         if not settings:
             return "No user profile settings found."

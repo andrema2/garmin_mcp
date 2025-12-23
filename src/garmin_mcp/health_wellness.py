@@ -10,15 +10,6 @@ from garmin_mcp.utils.validation import validate_date, validate_date_range
 
 logger = logging.getLogger(__name__)
 
-# The garmin_client will be set by the main file
-garmin_client = None
-
-
-def configure(client):
-    """Configure the module with the Garmin client instance"""
-    global garmin_client
-    garmin_client = client
-
 
 def register_tools(app):
     """Register all health and wellness tools with the MCP server app"""
@@ -34,6 +25,9 @@ def register_tools(app):
         Returns:
             JSON string with stats or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         date = validate_date(date, "date")
         stats = garmin_client.get_stats(date)
         
@@ -53,6 +47,9 @@ def register_tools(app):
         Returns:
             JSON string with user summary or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         date = validate_date(date, "date")
         summary = garmin_client.get_user_summary(date)
         
@@ -73,6 +70,9 @@ def register_tools(app):
         Returns:
             JSON string with body composition data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         start_date = validate_date(start_date, "start_date")
         
         if end_date:
@@ -98,6 +98,9 @@ def register_tools(app):
         Returns:
             JSON string with stats and body composition data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         date = validate_date(date, "date")
         data = garmin_client.get_stats_and_body(date)
         
@@ -117,6 +120,9 @@ def register_tools(app):
         Returns:
             JSON string with steps data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         date = validate_date(date, "date")
         steps_data = garmin_client.get_steps_data(date)
         
@@ -137,6 +143,9 @@ def register_tools(app):
         Returns:
             JSON string with daily steps data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         start_date, end_date = validate_date_range(start_date, end_date)
         steps_data = garmin_client.get_daily_steps(start_date, end_date)
         
@@ -156,6 +165,9 @@ def register_tools(app):
         Returns:
             JSON string with training readiness data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         date = validate_date(date, "date")
         readiness = garmin_client.get_training_readiness(date)
         
@@ -176,6 +188,9 @@ def register_tools(app):
         Returns:
             JSON string with body battery data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         start_date, end_date = validate_date_range(start_date, end_date)
         battery_data = garmin_client.get_body_battery(start_date, end_date)
         
@@ -195,6 +210,9 @@ def register_tools(app):
         Returns:
             JSON string with body battery events or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         date = validate_date(date, "date")
         events = garmin_client.get_body_battery_events(date)
         
@@ -215,6 +233,9 @@ def register_tools(app):
         Returns:
             JSON string with blood pressure data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         start_date, end_date = validate_date_range(start_date, end_date)
         bp_data = garmin_client.get_blood_pressure(start_date, end_date)
         
@@ -234,6 +255,9 @@ def register_tools(app):
         Returns:
             JSON string with floors data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         date = validate_date(date, "date")
         floors_data = garmin_client.get_floors(date)
         
@@ -253,6 +277,9 @@ def register_tools(app):
         Returns:
             JSON string with training status data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         date = validate_date(date, "date")
         status = garmin_client.get_training_status(date)
         
@@ -272,6 +299,9 @@ def register_tools(app):
         Returns:
             JSON string with resting heart rate data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         date = validate_date(date, "date")
         rhr_data = garmin_client.get_rhr_day(date)
         
@@ -291,6 +321,9 @@ def register_tools(app):
         Returns:
             JSON string with heart rate data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         date = validate_date(date, "date")
         hr_data = garmin_client.get_heart_rates(date)
         
@@ -310,6 +343,9 @@ def register_tools(app):
         Returns:
             JSON string with hydration data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         date = validate_date(date, "date")
         hydration_data = garmin_client.get_hydration_data(date)
         
@@ -329,6 +365,9 @@ def register_tools(app):
         Returns:
             JSON string with sleep data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         date = validate_date(date, "date")
         sleep_data = garmin_client.get_sleep_data(date)
         
@@ -348,6 +387,9 @@ def register_tools(app):
         Returns:
             JSON string with stress data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         date = validate_date(date, "date")
         stress_data = garmin_client.get_stress_data(date)
         
@@ -367,6 +409,9 @@ def register_tools(app):
         Returns:
             JSON string with respiration data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         date = validate_date(date, "date")
         respiration_data = garmin_client.get_respiration_data(date)
         
@@ -386,6 +431,9 @@ def register_tools(app):
         Returns:
             JSON string with SpO2 data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         date = validate_date(date, "date")
         spo2_data = garmin_client.get_spo2_data(date)
         
@@ -405,6 +453,9 @@ def register_tools(app):
         Returns:
             JSON string with all-day stress data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         date = validate_date(date, "date")
         stress_data = garmin_client.get_all_day_stress(date)
         
@@ -424,6 +475,9 @@ def register_tools(app):
         Returns:
             JSON string with daily wellness events or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         date = validate_date(date, "date")
         events = garmin_client.get_all_day_events(date)
         

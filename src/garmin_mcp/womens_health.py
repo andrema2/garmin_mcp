@@ -9,15 +9,6 @@ from garmin_mcp.utils.validation import validate_date, validate_date_range
 
 logger = logging.getLogger(__name__)
 
-# The garmin_client will be set by the main file
-garmin_client = None
-
-
-def configure(client):
-    """Configure the module with the Garmin client instance"""
-    global garmin_client
-    garmin_client = client
-
 
 def register_tools(app):
     """Register all women's health tools with the MCP server app"""
@@ -30,6 +21,10 @@ def register_tools(app):
         Returns:
             JSON string with pregnancy summary or error message
         """
+        from garmin_mcp import get_garmin_client
+
+        garmin_client = get_garmin_client()
+
         summary = garmin_client.get_pregnancy_summary()
         if not summary:
             return "No pregnancy summary data found."
@@ -47,6 +42,10 @@ def register_tools(app):
             JSON string with menstrual data or error message
         """
         date = validate_date(date, "date")
+        from garmin_mcp import get_garmin_client
+
+        garmin_client = get_garmin_client()
+
         data = garmin_client.get_menstrual_data_for_date(date)
         
         if not data:
@@ -66,6 +65,10 @@ def register_tools(app):
             JSON string with menstrual calendar data or error message
         """
         start_date, end_date = validate_date_range(start_date, end_date)
+        from garmin_mcp import get_garmin_client
+
+        garmin_client = get_garmin_client()
+
         data = garmin_client.get_menstrual_calendar_data(start_date, end_date)
         
         if not data:

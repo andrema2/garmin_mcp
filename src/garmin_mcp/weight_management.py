@@ -15,15 +15,6 @@ from garmin_mcp.utils.validation import (
 
 logger = logging.getLogger(__name__)
 
-# The garmin_client will be set by the main file
-garmin_client = None
-
-
-def configure(client):
-    """Configure the module with the Garmin client instance"""
-    global garmin_client
-    garmin_client = client
-
 
 def register_tools(app):
     """Register all weight management tools with the MCP server app"""
@@ -40,6 +31,9 @@ def register_tools(app):
         Returns:
             JSON string with weight measurements or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         start_date, end_date = validate_date_range(start_date, end_date)
         weigh_ins = garmin_client.get_weigh_ins(start_date, end_date)
         
@@ -59,6 +53,9 @@ def register_tools(app):
         Returns:
             JSON string with weight measurements or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         date = validate_date(date, "date")
         weigh_ins = garmin_client.get_daily_weigh_ins(date)
         
@@ -79,6 +76,9 @@ def register_tools(app):
         Returns:
             Deletion result or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         date = validate_date(date, "date")
         result = garmin_client.delete_weigh_ins(date, delete_all=delete_all)
         return serialize_response(result) if not isinstance(result, str) else result
@@ -100,6 +100,9 @@ def register_tools(app):
         
         if unit_key not in ("kg", "lb"):
             raise ValueError(f"unit_key must be 'kg' or 'lb', got '{unit_key}'")
+        
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
         
         result = garmin_client.add_weigh_in(weight=weight, unitKey=unit_key)
         return serialize_response(result) if not isinstance(result, str) else result
@@ -134,6 +137,9 @@ def register_tools(app):
             now = datetime.now(timezone.utc)
             date_timestamp = now.strftime('%Y-%m-%dT%H:%M:%S')
             gmt_timestamp = now.strftime('%Y-%m-%dT%H:%M:%S')
+        
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
         
         result = garmin_client.add_weigh_in_with_timestamps(
             weight=weight,

@@ -9,15 +9,6 @@ from garmin_mcp.utils.validation import validate_date, sanitize_string
 
 logger = logging.getLogger(__name__)
 
-# The garmin_client will be set by the main file
-garmin_client = None
-
-
-def configure(client):
-    """Configure the module with the Garmin client instance"""
-    global garmin_client
-    garmin_client = client
-
 
 def register_tools(app):
     """Register all device-related tools with the MCP server app"""
@@ -30,6 +21,9 @@ def register_tools(app):
         Returns:
             JSON string with devices or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         devices = garmin_client.get_devices()
         if not devices:
             return "No devices found."
@@ -43,6 +37,9 @@ def register_tools(app):
         Returns:
             JSON string with device information or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         device = garmin_client.get_device_last_used()
         if not device:
             return "No last used device found."
@@ -59,6 +56,9 @@ def register_tools(app):
         Returns:
             JSON string with device settings or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         device_id = sanitize_string(device_id, "device_id")
         settings = garmin_client.get_device_settings(device_id)
         if not settings:
@@ -73,6 +73,9 @@ def register_tools(app):
         Returns:
             JSON string with device information or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         device = garmin_client.get_primary_training_device()
         if not device:
             return "No primary training device found."
@@ -90,6 +93,9 @@ def register_tools(app):
         Returns:
             JSON string with solar data or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         device_id = sanitize_string(device_id, "device_id")
         date = validate_date(date, "date")
         solar_data = garmin_client.get_device_solar_data(device_id, date)
@@ -105,6 +111,9 @@ def register_tools(app):
         Returns:
             JSON string with device alarms or error message
         """
+        from garmin_mcp import get_garmin_client
+        garmin_client = get_garmin_client()
+        
         alarms = garmin_client.get_device_alarms()
         if not alarms:
             return "No device alarms found."

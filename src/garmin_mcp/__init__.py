@@ -5,12 +5,13 @@ Modular MCP Server for Garmin Connect Data
 import os
 import sys
 import logging
+import threading
 
-import requests
-from mcp.server.fastmcp import FastMCP
+import requests  # type: ignore
+from mcp.server.fastmcp import FastMCP  # type: ignore
 
-from garth.exc import GarthHTTPError
-from garminconnect import Garmin, GarminConnectAuthenticationError
+from garth.exc import GarthHTTPError  # type: ignore
+from garminconnect import Garmin, GarminConnectAuthenticationError  # type: ignore
 
 from garmin_mcp.utils.decorators import handle_garmin_errors
 from garmin_mcp.utils.validation import validate_positive_number
@@ -36,6 +37,10 @@ logging.basicConfig(
     force=True
 )
 logger = logging.getLogger(__name__)
+
+# Global Garmin client with lazy initialization (thread-safe)
+_garmin_client = None
+_garmin_client_lock = threading.Lock()
 
 
 def get_mfa() -> str:
@@ -99,24 +104,32 @@ def read_credential_file(file_path: str, credential_type: str) -> str:
         ) from e
 
 
-# Get credentials from environment
-email = os.environ.get("GARMIN_EMAIL")
-email_file_path = os.environ.get("GARMIN_EMAIL_FILE")
-if email and email_file_path:
-    raise ValueError(
-        "Must only provide one of GARMIN_EMAIL and GARMIN_EMAIL_FILE, got both"
-    )
-elif email_file_path:
-    email = read_credential_file(email_file_path, "Email")
+def _get_credentials():
+    """Get credentials from environment (lazy loading)
+    
+    Returns:
+        Tuple of (email, password)
+    """
+    email = os.environ.get("GARMIN_EMAIL")
+    email_file_path = os.environ.get("GARMIN_EMAIL_FILE")
+    if email and email_file_path:
+        raise ValueError(
+            "Must only provide one of GARMIN_EMAIL and GARMIN_EMAIL_FILE, got both"
+        )
+    elif email_file_path:
+        email = read_credential_file(email_file_path, "Email")
 
-password = os.environ.get("GARMIN_PASSWORD")
-password_file_path = os.environ.get("GARMIN_PASSWORD_FILE")
-if password and password_file_path:
-    raise ValueError(
-        "Must only provide one of GARMIN_PASSWORD and GARMIN_PASSWORD_FILE, got both"
-    )
-elif password_file_path:
-    password = read_credential_file(password_file_path, "Password")
+    password = os.environ.get("GARMIN_PASSWORD")
+    password_file_path = os.environ.get("GARMIN_PASSWORD_FILE")
+    if password and password_file_path:
+        raise ValueError(
+            "Must only provide one of GARMIN_PASSWORD and GARMIN_PASSWORD_FILE, got both"
+        )
+    elif password_file_path:
+        password = read_credential_file(password_file_path, "Password")
+    
+    return email, password
+
 
 # Expand paths for token storage (critical fix)
 tokenstore = os.path.expanduser(os.getenv("GARMINTOKENS") or "~/.garminconnect")
@@ -127,7 +140,6 @@ tokenstore_base64 = os.path.expanduser(
 
 def init_api(email, password):
     """Initialize Garmin API with your credentials."""
-
     try:
         # Using Oauth1 and OAuth2 token files from directory
         logger.info(f"Trying to login to Garmin Connect using token data from directory '{tokenstore}'...")
@@ -151,7 +163,7 @@ def init_api(email, password):
                 email=email, password=password, is_cn=False, prompt_mfa=get_mfa
             )
             garmin.login()
-            # Save Oauth1 and Oauth2 token files to directory for next login
+            # Save Oauth1 and OAuth2 token files to directory for next login
             garmin.garth.dump(tokenstore)
             logger.info(f"Oauth tokens stored in '{tokenstore}' directory for future use. (first method)")
             
@@ -173,34 +185,55 @@ def init_api(email, password):
     return garmin
 
 
+def get_garmin_client():
+    """Get Garmin client with lazy initialization (thread-safe)
+    
+    This function initializes the Garmin client on first call, making the
+    MCP server start instantly without waiting for authentication.
+    
+    Returns:
+        Garmin client instance
+        
+    Raises:
+        RuntimeError: If client initialization fails
+    """
+    global _garmin_client
+    
+    # Fast path: client already initialized
+    if _garmin_client is not None:
+        return _garmin_client
+    
+    # Thread-safe initialization
+    with _garmin_client_lock:
+        # Double-check pattern
+        if _garmin_client is not None:
+            return _garmin_client
+        
+        logger.info("Lazy initializing Garmin Connect client...")
+        email, password = _get_credentials()
+        client = init_api(email, password)
+        
+        if not client:
+            raise RuntimeError(
+                "Failed to initialize Garmin Connect client. "
+                "Please check your credentials and try again."
+            )
+        
+        _garmin_client = client
+        logger.info("Garmin Connect client initialized successfully (lazy init).")
+        return _garmin_client
+
+
 def main():
-    """Initialize the MCP server and register all tools"""
-
-    # Initialize Garmin client
-    garmin_client = init_api(email, password)
-    if not garmin_client:
-        logger.error("Failed to initialize Garmin Connect client. Exiting.")
-        sys.exit(1)
-
-    logger.info("Garmin Connect client initialized successfully.")
-
-    # Configure all modules with the Garmin client
-    activity_management.configure(garmin_client)
-    health_wellness.configure(garmin_client)
-    user_profile.configure(garmin_client)
-    devices.configure(garmin_client)
-    gear_management.configure(garmin_client)
-    weight_management.configure(garmin_client)
-    challenges.configure(garmin_client)
-    training.configure(garmin_client)
-    workouts.configure(garmin_client)
-    data_management.configure(garmin_client)
-    womens_health.configure(garmin_client)
-
-    # Create the MCP app
+    """Initialize the MCP server and register all tools
+    
+    Note: Garmin client initialization is deferred until first tool call
+    to allow MCP server to start instantly.
+    """
+    # Create the MCP app FIRST (before any blocking operations)
     app = FastMCP("Garmin Connect v1.0")
 
-    # Register tools from all modules
+    # Register tools from all modules (no client initialization yet)
     app = activity_management.register_tools(app)
     app = health_wellness.register_tools(app)
     app = user_profile.register_tools(app)
@@ -225,6 +258,9 @@ def main():
         Returns:
             Formatted string with activity information
         """
+        # Lazy init client on first use
+        garmin_client = get_garmin_client()
+        
         # Validate limit
         limit = int(validate_positive_number(limit, "limit", allow_zero=False))
         
@@ -245,8 +281,8 @@ def main():
 
         return result
 
-    # Run the MCP server
-    logger.info("Starting MCP server...")
+    # Run the MCP server (starts instantly, no blocking operations)
+    logger.info("Starting MCP server (Garmin client will initialize on first tool call)...")
     app.run()
 
 

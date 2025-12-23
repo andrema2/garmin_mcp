@@ -12,7 +12,8 @@ from mcp.server.fastmcp import FastMCP
 from garth.exc import GarthHTTPError
 from garminconnect import Garmin, GarminConnectAuthenticationError
 
-from garmin_mcp.utils.errors import GarminAuthenticationError as CustomAuthError
+from garmin_mcp.utils.decorators import handle_garmin_errors
+from garmin_mcp.utils.validation import validate_positive_number
 
 # Import all modules
 from garmin_mcp import activity_management
@@ -214,40 +215,35 @@ def main():
 
     # Add activity listing tool directly to the app
     @app.tool()
+    @handle_garmin_errors
     async def list_activities(limit: int = 5) -> str:
         """List recent Garmin activities
         
         Args:
-            limit: Maximum number of activities to retrieve (default: 5)
+            limit: Maximum number of activities to retrieve (default: 5, must be positive)
             
         Returns:
             Formatted string with activity information
         """
-        try:
-            from garmin_mcp.utils.validation import validate_positive_number
-            
-            # Validate limit
-            limit = int(validate_positive_number(limit, "limit", allow_zero=False))
-            
-            activities = garmin_client.get_activities(0, limit)
+        # Validate limit
+        limit = int(validate_positive_number(limit, "limit", allow_zero=False))
+        
+        activities = garmin_client.get_activities(0, limit)
 
-            if not activities:
-                return "No activities found."
+        if not activities:
+            return "No activities found."
 
-            result = f"Last {len(activities)} activities:\n\n"
-            for idx, activity in enumerate(activities, 1):
-                result += f"--- Activity {idx} ---\n"
-                result += f"Activity: {activity.get('activityName', 'Unknown')}\n"
-                result += (
-                    f"Type: {activity.get('activityType', {}).get('typeKey', 'Unknown')}\n"
-                )
-                result += f"Date: {activity.get('startTimeLocal', 'Unknown')}\n"
-                result += f"ID: {activity.get('activityId', 'Unknown')}\n\n"
+        result = f"Last {len(activities)} activities:\n\n"
+        for idx, activity in enumerate(activities, 1):
+            result += f"--- Activity {idx} ---\n"
+            result += f"Activity: {activity.get('activityName', 'Unknown')}\n"
+            result += (
+                f"Type: {activity.get('activityType', {}).get('typeKey', 'Unknown')}\n"
+            )
+            result += f"Date: {activity.get('startTimeLocal', 'Unknown')}\n"
+            result += f"ID: {activity.get('activityId', 'Unknown')}\n\n"
 
-            return result
-        except Exception as e:
-            logger.error(f"Error retrieving activities: {e}", exc_info=True)
-            return f"Error retrieving activities: {str(e)}"
+        return result
 
     # Run the MCP server
     logger.info("Starting MCP server...")

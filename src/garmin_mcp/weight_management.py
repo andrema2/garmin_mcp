@@ -3,13 +3,16 @@ Weight management functions for Garmin Connect MCP Server
 """
 import logging
 from datetime import datetime, timezone
+from typing import Optional
 
 from garmin_mcp.utils.decorators import handle_garmin_errors
 from garmin_mcp.utils.serialization import serialize_response
+from garmin_mcp.utils.garmin_async import call_garmin
 from garmin_mcp.utils.validation import (
     validate_date,
     validate_date_range,
     validate_positive_number,
+    resolve_date,
     sanitize_string,
 )
 
@@ -31,11 +34,8 @@ def register_tools(app):
         Returns:
             JSON string with weight measurements or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
         start_date, end_date = validate_date_range(start_date, end_date)
-        weigh_ins = garmin_client.get_weigh_ins(start_date, end_date)
+        weigh_ins = await call_garmin("get_weigh_ins", start_date, end_date)
         
         if not weigh_ins:
             return f"No weight measurements found between {start_date} and {end_date}."
@@ -44,7 +44,7 @@ def register_tools(app):
 
     @app.tool()
     @handle_garmin_errors
-    async def get_daily_weigh_ins(date: str) -> str:
+    async def get_daily_weigh_ins(date: Optional[str] = None) -> str:
         """Get weight measurements for a specific date
         
         Args:
@@ -53,11 +53,8 @@ def register_tools(app):
         Returns:
             JSON string with weight measurements or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
-        date = validate_date(date, "date")
-        weigh_ins = garmin_client.get_daily_weigh_ins(date)
+        date = resolve_date(date, "date")
+        weigh_ins = await call_garmin("get_daily_weigh_ins", date)
         
         if not weigh_ins:
             return f"No weight measurements found for {date}."
@@ -76,11 +73,8 @@ def register_tools(app):
         Returns:
             Deletion result or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
         date = validate_date(date, "date")
-        result = garmin_client.delete_weigh_ins(date, delete_all=delete_all)
+        result = await call_garmin("delete_weigh_ins", date, delete_all=delete_all)
         return serialize_response(result) if not isinstance(result, str) else result
     
     @app.tool()
@@ -101,10 +95,7 @@ def register_tools(app):
         if unit_key not in ("kg", "lb"):
             raise ValueError(f"unit_key must be 'kg' or 'lb', got '{unit_key}'")
         
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
-        result = garmin_client.add_weigh_in(weight=weight, unitKey=unit_key)
+        result = await call_garmin("add_weigh_in", weight=weight, unitKey=unit_key)
         return serialize_response(result) if not isinstance(result, str) else result
     
     @app.tool()
@@ -138,10 +129,8 @@ def register_tools(app):
             date_timestamp = now.strftime('%Y-%m-%dT%H:%M:%S')
             gmt_timestamp = now.strftime('%Y-%m-%dT%H:%M:%S')
         
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
-        result = garmin_client.add_weigh_in_with_timestamps(
+        result = await call_garmin(
+            "add_weigh_in_with_timestamps",
             weight=weight,
             unitKey=unit_key,
             dateTimestamp=date_timestamp,

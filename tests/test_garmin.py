@@ -4,6 +4,16 @@ This script allows you to test the connection and API functions without MCP
 """
 
 import os
+import pytest
+
+# Integração real com Garmin depende de credenciais, rede e pode falhar de forma flakey.
+# Por padrão, mantemos isso como teste opt-in.
+if os.environ.get("RUN_GARMIN_INTEGRATION_TESTS") != "1":
+    pytest.skip(
+        "Integration test (Garmin). Defina RUN_GARMIN_INTEGRATION_TESTS=1 para habilitar.",
+        allow_module_level=True,
+    )
+
 import datetime
 from pathlib import Path
 import json

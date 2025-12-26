@@ -19,6 +19,15 @@ This Model Context Protocol (MCP) server connects to Garmin Connect and exposes 
 uv sync
 ```
 
+### Development (tests)
+
+Install dev extras and run tests:
+
+```bash
+uv sync --extra dev
+uv run --frozen pytest
+```
+
 ## Running the Server
 
 ### Configuration

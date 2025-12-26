@@ -5,6 +5,7 @@ import logging
 
 from garmin_mcp.utils.decorators import handle_garmin_errors
 from garmin_mcp.utils.serialization import serialize_response
+from garmin_mcp.utils.garmin_async import call_garmin
 from garmin_mcp.utils.validation import validate_date, validate_date_range, validate_id
 
 logger = logging.getLogger(__name__)
@@ -21,11 +22,7 @@ def register_tools(app):
         Returns:
             JSON string with all workouts or error message
         """
-        from garmin_mcp import get_garmin_client
-
-        garmin_client = get_garmin_client()
-
-        workouts = garmin_client.get_workouts()
+        workouts = await call_garmin("get_workouts")
         if not workouts:
             return "No workouts found."
         return serialize_response(workouts)
@@ -42,11 +39,7 @@ def register_tools(app):
             JSON string with workout details or error message
         """
         workout_id = validate_id(workout_id, "workout_id")
-        from garmin_mcp import get_garmin_client
-
-        garmin_client = get_garmin_client()
-
-        workout = garmin_client.get_workout_by_id(workout_id)
+        workout = await call_garmin("get_workout_by_id", workout_id)
         if not workout:
             return f"No workout found with ID {workout_id}."
         return serialize_response(workout)
@@ -63,11 +56,7 @@ def register_tools(app):
             Message about workout data availability
         """
         workout_id = validate_id(workout_id, "workout_id")
-        from garmin_mcp import get_garmin_client
-
-        garmin_client = get_garmin_client()
-
-        workout_data = garmin_client.download_workout(workout_id)
+        workout_data = await call_garmin("download_workout", workout_id)
         if not workout_data:
             return f"No workout data found for workout with ID {workout_id}."
         
@@ -88,11 +77,7 @@ def register_tools(app):
         from garmin_mcp.utils.validation import sanitize_string
         
         workout_json = sanitize_string(workout_json, "workout_json")
-        from garmin_mcp import get_garmin_client
-
-        garmin_client = get_garmin_client()
-
-        result = garmin_client.upload_workout(workout_json)
+        result = await call_garmin("upload_workout", workout_json)
         return serialize_response(result) if not isinstance(result, str) else result
             
     @app.tool()
@@ -144,13 +129,7 @@ def register_tools(app):
             }
         }
         
-        from garmin_mcp import get_garmin_client
-
-        
-        garmin_client = get_garmin_client()
-
-        
-        result = garmin_client.query_garmin_graphql(query)
+        result = await call_garmin("query_garmin_graphql", query)
 
         if not result or "data" not in result:
             return "No scheduled workouts found or error querying data."
@@ -192,13 +171,7 @@ def register_tools(app):
             }
         }
         
-        from garmin_mcp import get_garmin_client
-
-        
-        garmin_client = get_garmin_client()
-
-        
-        result = garmin_client.query_garmin_graphql(query)
+        result = await call_garmin("query_garmin_graphql", query)
 
         if not result or "data" not in result:
             return "No training plan data found or error querying data."

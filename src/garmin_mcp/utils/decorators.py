@@ -3,6 +3,8 @@ Decorators for error handling and logging
 """
 
 import logging
+import inspect
+from functools import partial
 from functools import wraps
 from typing import Callable, Any
 
@@ -30,7 +32,15 @@ def handle_garmin_errors(func: Callable) -> Callable:
     @wraps(func)
     async def wrapper(*args: Any, **kwargs: Any) -> str:
         try:
-            result = await func(*args, **kwargs)
+            # Suporta tools async e sync.
+            # Se for sync (ex.: por conveniência ou testes), roda em thread para
+            # não bloquear o event loop.
+            if inspect.iscoroutinefunction(func):
+                result = await func(*args, **kwargs)
+            else:
+                import anyio  # type: ignore
+
+                result = await anyio.to_thread.run_sync(partial(func, *args, **kwargs))
             
             # Serialize if not already a string
             if not isinstance(result, str):

@@ -14,9 +14,12 @@ from garmin_mcp.utils.validation import (
     validate_date_range,
     validate_positive_number,
     validate_id,
+    today_date_str,
+    resolve_date,
     sanitize_string,
 )
 from garmin_mcp.utils.decorators import handle_garmin_errors
+from garmin_mcp.utils.garmin_async import call_garmin
 
 __all__ = [
     "GarminMCPError",
@@ -28,7 +31,10 @@ __all__ = [
     "validate_date_range",
     "validate_positive_number",
     "validate_id",
+    "today_date_str",
+    "resolve_date",
     "sanitize_string",
     "handle_garmin_errors",
+    "call_garmin",
 ]
 

@@ -2,9 +2,19 @@
 Debug version of the MCP server for direct testing
 """
 
+import os
+import pytest
+
+# Esse arquivo é um script manual (precisa de credenciais e rede).
+# Deixamos como opt-in para não quebrar CI/testes locais offline.
+if os.environ.get("RUN_GARMIN_INTEGRATION_TESTS") != "1":
+    pytest.skip(
+        "Integration test (Garmin debug). Defina RUN_GARMIN_INTEGRATION_TESTS=1 para habilitar.",
+        allow_module_level=True,
+    )
+
 import asyncio
 import datetime
-import os
 from pathlib import Path
 
 from dotenv import load_dotenv

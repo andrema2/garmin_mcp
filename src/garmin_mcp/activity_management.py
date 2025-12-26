@@ -2,13 +2,16 @@
 Activity Management functions for Garmin Connect MCP Server
 """
 import logging
+from typing import Optional
 
 from garmin_mcp.utils.decorators import handle_garmin_errors
 from garmin_mcp.utils.serialization import serialize_response
+from garmin_mcp.utils.garmin_async import call_garmin
 from garmin_mcp.utils.validation import (
     validate_date,
     validate_date_range,
     validate_id,
+    resolve_date,
     sanitize_string,
 )
 
@@ -35,17 +38,12 @@ def register_tools(app):
         Returns:
             JSON string with activities or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
         start_date, end_date = validate_date_range(start_date, end_date)
         
         if activity_type:
             activity_type = sanitize_string(activity_type, "activity_type")
         
-        activities = garmin_client.get_activities_by_date(
-            start_date, end_date, activity_type
-        )
+        activities = await call_garmin("get_activities_by_date", start_date, end_date, activity_type)
         
         if not activities:
             msg = f"No activities found between {start_date} and {end_date}"
@@ -57,20 +55,17 @@ def register_tools(app):
 
     @app.tool()
     @handle_garmin_errors
-    async def get_activities_fordate(date: str) -> str:
+    async def get_activities_fordate(date: Optional[str] = None) -> str:
         """Get activities for a specific date
         
         Args:
-            date: Date in YYYY-MM-DD format
+            date: Date in YYYY-MM-DD format (default: today)
             
         Returns:
             JSON string with activities or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
-        date = validate_date(date, "date")
-        activities = garmin_client.get_activities_fordate(date)
+        date = resolve_date(date, "date")
+        activities = await call_garmin("get_activities_fordate", date)
         
         if not activities:
             return f"No activities found for {date}"
@@ -88,11 +83,8 @@ def register_tools(app):
         Returns:
             JSON string with activity information or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
         activity_id = validate_id(activity_id, "activity_id")
-        activity = garmin_client.get_activity(activity_id)
+        activity = await call_garmin("get_activity", activity_id)
         
         if not activity:
             return f"No activity found with ID {activity_id}"
@@ -110,11 +102,8 @@ def register_tools(app):
         Returns:
             JSON string with splits data or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
         activity_id = validate_id(activity_id, "activity_id")
-        splits = garmin_client.get_activity_splits(activity_id)
+        splits = await call_garmin("get_activity_splits", activity_id)
         
         if not splits:
             return f"No splits found for activity with ID {activity_id}"
@@ -132,11 +121,8 @@ def register_tools(app):
         Returns:
             JSON string with typed splits data or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
         activity_id = validate_id(activity_id, "activity_id")
-        typed_splits = garmin_client.get_activity_typed_splits(activity_id)
+        typed_splits = await call_garmin("get_activity_typed_splits", activity_id)
         
         if not typed_splits:
             return f"No typed splits found for activity with ID {activity_id}"
@@ -154,11 +140,8 @@ def register_tools(app):
         Returns:
             JSON string with split summaries or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
         activity_id = validate_id(activity_id, "activity_id")
-        split_summaries = garmin_client.get_activity_split_summaries(activity_id)
+        split_summaries = await call_garmin("get_activity_split_summaries", activity_id)
         
         if not split_summaries:
             return f"No split summaries found for activity with ID {activity_id}"
@@ -176,11 +159,8 @@ def register_tools(app):
         Returns:
             JSON string with weather data or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
         activity_id = validate_id(activity_id, "activity_id")
-        weather = garmin_client.get_activity_weather(activity_id)
+        weather = await call_garmin("get_activity_weather", activity_id)
         
         if not weather:
             return f"No weather data found for activity with ID {activity_id}"
@@ -198,11 +178,8 @@ def register_tools(app):
         Returns:
             JSON string with heart rate time zone data or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
         activity_id = validate_id(activity_id, "activity_id")
-        hr_zones = garmin_client.get_activity_hr_in_timezones(activity_id)
+        hr_zones = await call_garmin("get_activity_hr_in_timezones", activity_id)
         
         if not hr_zones:
             return f"No heart rate time zone data found for activity with ID {activity_id}"
@@ -220,11 +197,8 @@ def register_tools(app):
         Returns:
             JSON string with gear data or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
         activity_id = validate_id(activity_id, "activity_id")
-        gear = garmin_client.get_activity_gear(activity_id)
+        gear = await call_garmin("get_activity_gear", activity_id)
         
         if not gear:
             return f"No gear data found for activity with ID {activity_id}"
@@ -242,11 +216,8 @@ def register_tools(app):
         Returns:
             JSON string with exercise sets data or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
         activity_id = validate_id(activity_id, "activity_id")
-        exercise_sets = garmin_client.get_activity_exercise_sets(activity_id)
+        exercise_sets = await call_garmin("get_activity_exercise_sets", activity_id)
         
         if not exercise_sets:
             return f"No exercise sets found for activity with ID {activity_id}"

@@ -2,10 +2,12 @@
 Device-related functions for Garmin Connect MCP Server
 """
 import logging
+from typing import Optional
 
 from garmin_mcp.utils.decorators import handle_garmin_errors
 from garmin_mcp.utils.serialization import serialize_response
-from garmin_mcp.utils.validation import validate_date, sanitize_string
+from garmin_mcp.utils.garmin_async import call_garmin
+from garmin_mcp.utils.validation import validate_date, resolve_date, sanitize_string
 
 logger = logging.getLogger(__name__)
 
@@ -21,10 +23,7 @@ def register_tools(app):
         Returns:
             JSON string with devices or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
-        devices = garmin_client.get_devices()
+        devices = await call_garmin("get_devices")
         if not devices:
             return "No devices found."
         return serialize_response(devices)
@@ -37,10 +36,7 @@ def register_tools(app):
         Returns:
             JSON string with device information or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
-        device = garmin_client.get_device_last_used()
+        device = await call_garmin("get_device_last_used")
         if not device:
             return "No last used device found."
         return serialize_response(device)
@@ -56,11 +52,8 @@ def register_tools(app):
         Returns:
             JSON string with device settings or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
         device_id = sanitize_string(device_id, "device_id")
-        settings = garmin_client.get_device_settings(device_id)
+        settings = await call_garmin("get_device_settings", device_id)
         if not settings:
             return f"No settings found for device ID {device_id}."
         return serialize_response(settings)
@@ -73,17 +66,14 @@ def register_tools(app):
         Returns:
             JSON string with device information or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
-        device = garmin_client.get_primary_training_device()
+        device = await call_garmin("get_primary_training_device")
         if not device:
             return "No primary training device found."
         return serialize_response(device)
     
     @app.tool()
     @handle_garmin_errors
-    async def get_device_solar_data(device_id: str, date: str) -> str:
+    async def get_device_solar_data(device_id: str, date: Optional[str] = None) -> str:
         """Get solar data for a specific device
         
         Args:
@@ -93,12 +83,9 @@ def register_tools(app):
         Returns:
             JSON string with solar data or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
         device_id = sanitize_string(device_id, "device_id")
-        date = validate_date(date, "date")
-        solar_data = garmin_client.get_device_solar_data(device_id, date)
+        date = resolve_date(date, "date")
+        solar_data = await call_garmin("get_device_solar_data", device_id, date)
         if not solar_data:
             return f"No solar data found for device ID {device_id} on {date}."
         return serialize_response(solar_data)
@@ -111,10 +98,7 @@ def register_tools(app):
         Returns:
             JSON string with device alarms or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
-        alarms = garmin_client.get_device_alarms()
+        alarms = await call_garmin("get_device_alarms")
         if not alarms:
             return "No device alarms found."
         return serialize_response(alarms)

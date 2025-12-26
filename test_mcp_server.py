@@ -6,7 +6,6 @@ This script tests the MCP server directly without needing Claude Desktop
 import asyncio
 import sys
 import json
-from pathlib import Path
 from dotenv import load_dotenv
 
 # Import MCP client for testing
@@ -19,19 +18,12 @@ load_dotenv()
 
 async def test_mcp_server():
     """Test MCP server by simulating a client connection"""
-    # Path to the server script
-    server_script = Path(__file__).parent / "garmin_mcp_server.py"
-
-    if not server_script.exists():
-        print(f"ERROR: Server script not found at {server_script}")
-        return
-
-    print(f"Testing MCP server at: {server_script}")
+    print("Testing MCP server via `python -m garmin_mcp` (stdio)...")
 
     # Create server parameters
     server_params = StdioServerParameters(
-        command="python",
-        args=[str(server_script)],
+        command=sys.executable,
+        args=["-m", "garmin_mcp"],
         env=None,  # Uses current environment which includes .env variables
     )
 

@@ -5,6 +5,7 @@ import logging
 
 from garmin_mcp.utils.decorators import handle_garmin_errors
 from garmin_mcp.utils.serialization import serialize_response
+from garmin_mcp.utils.garmin_async import call_garmin
 
 logger = logging.getLogger(__name__)
 
@@ -20,10 +21,7 @@ def register_tools(app):
         Returns:
             User's full name or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
-        full_name = garmin_client.get_full_name()
+        full_name = await call_garmin("get_full_name")
         return full_name if isinstance(full_name, str) else serialize_response(full_name)
 
     @app.tool()
@@ -34,10 +32,7 @@ def register_tools(app):
         Returns:
             Unit system or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
-        unit_system = garmin_client.get_unit_system()
+        unit_system = await call_garmin("get_unit_system")
         return unit_system if isinstance(unit_system, str) else serialize_response(unit_system)
     
     @app.tool()
@@ -48,10 +43,7 @@ def register_tools(app):
         Returns:
             JSON string with user profile information or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
-        profile = garmin_client.get_user_profile()
+        profile = await call_garmin("get_user_profile")
         if not profile:
             return "No user profile information found."
         return serialize_response(profile)
@@ -64,10 +56,7 @@ def register_tools(app):
         Returns:
             JSON string with user profile settings or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
-        settings = garmin_client.get_userprofile_settings()
+        settings = await call_garmin("get_userprofile_settings")
         if not settings:
             return "No user profile settings found."
         return serialize_response(settings)

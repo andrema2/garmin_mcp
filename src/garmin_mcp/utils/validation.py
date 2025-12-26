@@ -54,6 +54,24 @@ def validate_date(date_str: str, param_name: str = "date") -> str:
     return date_str
 
 
+def today_date_str() -> str:
+    """Retorna a data de hoje no formato YYYY-MM-DD (timezone local)."""
+    return datetime.now().date().isoformat()
+
+
+def resolve_date(date_str: Optional[str], param_name: str = "date") -> str:
+    """Resolve um parâmetro de data opcional.
+
+    - Se `date_str` for None ou vazio, usa a data de hoje.
+    - Caso contrário, valida com `validate_date`.
+    """
+    if date_str is None:
+        return today_date_str()
+    if isinstance(date_str, str) and not date_str.strip():
+        return today_date_str()
+    return validate_date(date_str, param_name)
+
+
 def validate_date_range(start_date: str, end_date: str) -> tuple[str, str]:
     """Validate date range (start_date <= end_date)
     

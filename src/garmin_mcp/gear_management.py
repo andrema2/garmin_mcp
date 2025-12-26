@@ -5,6 +5,7 @@ import logging
 
 from garmin_mcp.utils.decorators import handle_garmin_errors
 from garmin_mcp.utils.serialization import serialize_response
+from garmin_mcp.utils.garmin_async import call_garmin
 from garmin_mcp.utils.validation import sanitize_string
 
 logger = logging.getLogger(__name__)
@@ -24,11 +25,8 @@ def register_tools(app):
         Returns:
             JSON string with gear information or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
         user_profile_id = sanitize_string(user_profile_id, "user_profile_id")
-        gear = garmin_client.get_gear(user_profile_id)
+        gear = await call_garmin("get_gear", user_profile_id)
         if not gear:
             return "No gear found."
         return serialize_response(gear)
@@ -44,11 +42,8 @@ def register_tools(app):
         Returns:
             JSON string with gear defaults or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
         user_profile_id = sanitize_string(user_profile_id, "user_profile_id")
-        defaults = garmin_client.get_gear_defaults(user_profile_id)
+        defaults = await call_garmin("get_gear_defaults", user_profile_id)
         if not defaults:
             return "No gear defaults found."
         return serialize_response(defaults)
@@ -64,11 +59,8 @@ def register_tools(app):
         Returns:
             JSON string with gear statistics or error message
         """
-        from garmin_mcp import get_garmin_client
-        garmin_client = get_garmin_client()
-        
         gear_uuid = sanitize_string(gear_uuid, "gear_uuid")
-        stats = garmin_client.get_gear_stats(gear_uuid)
+        stats = await call_garmin("get_gear_stats", gear_uuid)
         if not stats:
             return f"No stats found for gear with UUID {gear_uuid}."
         return serialize_response(stats)

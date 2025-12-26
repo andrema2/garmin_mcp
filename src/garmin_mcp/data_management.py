@@ -6,6 +6,7 @@ from typing import Optional
 
 from garmin_mcp.utils.decorators import handle_garmin_errors
 from garmin_mcp.utils.serialization import serialize_response
+from garmin_mcp.utils.garmin_async import call_garmin
 from garmin_mcp.utils.validation import (
     validate_date,
     validate_positive_number,
@@ -78,13 +79,8 @@ def register_tools(app):
         if bmi is not None:
             validate_positive_number(bmi, "bmi", allow_zero=True)
         
-        from garmin_mcp import get_garmin_client
-
-        
-        garmin_client = get_garmin_client()
-
-        
-        result = garmin_client.add_body_composition(
+        result = await call_garmin(
+            "add_body_composition",
             date,
             weight=weight,
             percent_fat=percent_fat,
@@ -126,16 +122,8 @@ def register_tools(app):
         
         if notes:
             notes = sanitize_string(notes, "notes")
-        
-        from garmin_mcp import get_garmin_client
 
-        
-        garmin_client = get_garmin_client()
-
-        
-        result = garmin_client.set_blood_pressure(
-            systolic, diastolic, pulse, notes=notes
-        )
+        result = await call_garmin("set_blood_pressure", systolic, diastolic, pulse, notes=notes)
         return serialize_response(result) if not isinstance(result, str) else result
     
     @app.tool()
@@ -158,18 +146,8 @@ def register_tools(app):
         value_in_ml = int(validate_positive_number(value_in_ml, "value_in_ml", allow_zero=True))
         cdate = validate_date(cdate, "cdate")
         timestamp = sanitize_string(timestamp, "timestamp")
-        
-        from garmin_mcp import get_garmin_client
 
-        
-        garmin_client = get_garmin_client()
-
-        
-        result = garmin_client.add_hydration_data(
-            value_in_ml=value_in_ml,
-            cdate=cdate,
-            timestamp=timestamp
-        )
+        result = await call_garmin("add_hydration_data", value_in_ml=value_in_ml, cdate=cdate, timestamp=timestamp)
         return serialize_response(result) if not isinstance(result, str) else result
 
     return app

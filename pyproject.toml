@@ -16,8 +16,13 @@ dependencies = [
     "garth==0.5.2",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.4",
+]
+
 [project.scripts]
-garmin-mcp = "garmin_mcp:main"
+garmin-mcp = "garmin_mcp.server:main"
 
 [tool.uv.sources]
 garmin-mcp = { workspace = true }
